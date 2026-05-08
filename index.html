@@ -339,7 +339,6 @@ function closeAddrModal() {
   document.getElementById("addrResults").innerHTML = '<div class="addr-result-empty">검색어를 입력하세요</div>';
 }
 
-let _addrDebounce = null;
 function onAddrModalInput(input) {
   const query = input.value.trim();
   const results = document.getElementById("addrResults");
