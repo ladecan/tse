@@ -110,15 +110,25 @@ header{background:var(--navy);color:#fff;padding:0 28px;height:52px;display:flex
 .btn-msave:hover{background:#9a7a58}
 .btn-preview{display:flex;align-items:center;gap:7px;padding:7px 15px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:5px;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;margin-right:8px}
 .btn-preview:hover{background:rgba(255,255,255,.25)}
-/* ── 장소검색 드롭다운 ── */
-.addr-wrap{position:relative}
-.search-portal{display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid var(--bdr);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500;max-height:220px;overflow-y:auto}
-.search-portal.active{display:block}
-.search-item{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--bdr-lt);font-family:'Noto Sans KR',sans-serif}
-.search-item:last-child{border-bottom:none}
-.search-item:hover{background:var(--navy-xl)}
-.search-item .si-name{font-size:12px;font-weight:600;color:var(--tx)}
-.search-item .si-addr{font-size:10.5px;color:var(--tx3);margin-top:1px}
+/* ── 장소검색 팝업 모달 ── */
+.addr-modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;align-items:center;justify-content:center}
+.addr-modal-ov.open{display:flex}
+.addr-modal-box{background:#fff;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:460px;max-width:95vw;display:flex;flex-direction:column;overflow:hidden}
+.addr-modal-hd{padding:12px 16px;background:var(--navy);display:flex;align-items:center;justify-content:space-between}
+.addr-modal-hd span{color:#fff;font-size:13px;font-weight:600;font-family:'Noto Sans KR',sans-serif}
+.addr-modal-x{border:none;background:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px}
+.addr-modal-x:hover{color:#fff}
+.addr-modal-input-wrap{padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.addr-modal-input-wrap input{width:100%;padding:8px 11px;border:1.5px solid var(--navy);border-radius:5px;font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none}
+.addr-results{max-height:300px;overflow-y:auto}
+.addr-results::-webkit-scrollbar{width:4px}
+.addr-results::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+.addr-result-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr-lt);font-family:'Noto Sans KR',sans-serif}
+.addr-result-item:last-child{border-bottom:none}
+.addr-result-item:hover{background:var(--navy-xl)}
+.addr-result-item .ri-name{font-size:13px;font-weight:600;color:var(--tx)}
+.addr-result-item .ri-addr{font-size:11px;color:var(--tx3);margin-top:2px}
+.addr-result-empty{padding:32px;text-align:center;color:var(--tx3);font-size:12px;font-family:'Noto Sans KR',sans-serif}
 </style>
 <!-- 카카오 장소검색 API -->
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9eb81b2d9508d3c7222269657b22d9a6&libraries=services&autoload=false"></script>
@@ -189,9 +199,9 @@ header{background:var(--navy);color:#fff;padding:0 28px;height:52px;display:flex
     <div class="f"><label>회사 / 병원명 <span class="req">*</span></label><input type="text" id="bName" oninput="markCustom();render()"></div>
     <div class="f">
       <label>주소</label>
-      <div class="addr-wrap">
-        <input type="text" id="bAddr1" placeholder="병원명 또는 주소로 검색" oninput="onAddrInput(this)" autocomplete="off" style="width:100%">
-        <div id="addrPortal" class="search-portal"></div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="bAddr1" placeholder="주소" oninput="render()" style="flex:1" readonly onclick="openAddrModal()">
+        <button onclick="openAddrModal()" style="padding:6px 12px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">🔍 주소검색</button>
       </div>
       <input type="hidden" id="bAddr2" value="">
     </div>
@@ -209,6 +219,20 @@ header{background:var(--navy);color:#fff;padding:0 28px;height:52px;display:flex
   </div>
   <div class="prev-scroll"><div class="doc" id="doc"></div></div>
 </main>
+</div>
+<div class="addr-modal-ov" id="addrModal" onclick="if(event.target===this)closeAddrModal()">
+  <div class="addr-modal-box">
+    <div class="addr-modal-hd">
+      <span>🔍 주소 검색</span>
+      <button class="addr-modal-x" onclick="closeAddrModal()">×</button>
+    </div>
+    <div class="addr-modal-input-wrap">
+      <input type="text" id="addrModalInput" placeholder="병원명, 장소명, 주소로 검색" oninput="onAddrModalInput(this)" autocomplete="off">
+    </div>
+    <div class="addr-results" id="addrResults">
+      <div class="addr-result-empty">검색어를 입력하세요</div>
+    </div>
+  </div>
 </div>
 <div class="modal-ov" id="previewModal" onclick="if(event.target===this)closePreview()">
   <div class="modal-box">
@@ -305,43 +329,46 @@ function _initKakao() {
 }
 _initKakao();
 
-function onAddrInput(input) {
-  render();
+function openAddrModal() {
+  document.getElementById("addrModal").classList.add("open");
+  setTimeout(() => document.getElementById("addrModalInput").focus(), 80);
+}
+function closeAddrModal() {
+  document.getElementById("addrModal").classList.remove("open");
+  document.getElementById("addrModalInput").value = "";
+  document.getElementById("addrResults").innerHTML = '<div class="addr-result-empty">검색어를 입력하세요</div>';
+}
+
+let _addrDebounce = null;
+function onAddrModalInput(input) {
   const query = input.value.trim();
-  const portal = document.getElementById("addrPortal");
+  const results = document.getElementById("addrResults");
   clearTimeout(_addrDebounce);
-  if (!query) { portal.classList.remove("active"); return; }
+  if (!query) { results.innerHTML = '<div class="addr-result-empty">검색어를 입력하세요</div>'; return; }
   _addrDebounce = setTimeout(() => {
-    if (!_kakaoPS) { portal.innerHTML = '<div style="padding:12px;text-align:center;color:#888;font-size:11px;">카카오 서비스 연결 중...</div>'; portal.classList.add("active"); return; }
-    _kakaoPS.keywordSearch(query, (results, status) => {
-      portal.innerHTML = "";
+    if (!_kakaoPS) { results.innerHTML = '<div class="addr-result-empty">카카오 서비스 연결 중...</div>'; return; }
+    _kakaoPS.keywordSearch(query, (items, status) => {
+      results.innerHTML = "";
       if (status === kakao.maps.services.Status.OK) {
-        results.slice(0, 8).forEach(item => {
+        items.slice(0, 10).forEach(item => {
           const addr = item.road_address_name || item.address_name;
           const node = document.createElement("div");
-          node.className = "search-item";
-          node.innerHTML = `<div class="si-name">${item.place_name}</div><div class="si-addr">${addr}</div>`;
+          node.className = "addr-result-item";
+          node.innerHTML = `<div class="ri-name">${item.place_name}</div><div class="ri-addr">${addr}</div>`;
           node.onclick = () => {
             document.getElementById("bAddr1").value = addr;
-            portal.classList.remove("active");
+            closeAddrModal();
             markCustom();
             render();
           };
-          portal.appendChild(node);
+          results.appendChild(node);
         });
-        portal.classList.add("active");
-      } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
-        portal.innerHTML = '<div style="padding:12px;text-align:center;color:#888;font-size:11px;">검색 결과가 없습니다</div>';
-        portal.classList.add("active");
+      } else {
+        results.innerHTML = '<div class="addr-result-empty">검색 결과가 없습니다</div>';
       }
     });
   }, 250);
 }
-
-// 외부 클릭 시 드롭다운 닫기
-document.addEventListener("click", e => {
-  if (!e.target.closest(".addr-wrap")) document.getElementById("addrPortal").classList.remove("active");
-});
 
 function fmtBiz(el){
   const n=el.value.replace(/[^0-9]/g,"");
