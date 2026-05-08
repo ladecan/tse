@@ -200,7 +200,7 @@ header{background:var(--navy);color:#fff;padding:0 28px;height:52px;display:flex
     <div class="f">
       <label>주소</label>
       <div style="display:flex;gap:6px">
-        <input type="text" id="bAddr1" placeholder="주소" oninput="render()" style="flex:1" readonly onclick="openAddrModal()">
+        <input type="text" id="bAddr1" placeholder="주소" oninput="render()" style="flex:1" onclick="openAddrModal()">
         <button onclick="openAddrModal()" style="padding:6px 12px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">🔍 주소검색</button>
       </div>
       <input type="hidden" id="bAddr2" value="">
