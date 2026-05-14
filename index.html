@@ -361,7 +361,12 @@
         <div class="detail-content">
             <div class="gmpp-layout">
 
-                <!-- 왼쪽: 핸드피스 구성 -->
+                <!-- 맨 왼쪽: LEFT 이미지 -->
+                <div style="flex-shrink:0; width:320px; display:flex; align-items:flex-start;">
+                    <img src="LEFT.png" alt="핸드피스 타입 안내" style="width:100%; border-radius:12px; cursor:pointer;" onclick="document.getElementById('leftImgModal').classList.add('active')">
+                </div>
+
+                <!-- 가운데: 핸드피스 구성 -->
                 <div class="hp-panel">
                     <div class="hp-panel-title">Handpiece 구성</div>
                     <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); margin-bottom:0.3rem;">👆 클릭하면 크게 볼 수 있습니다</div>
@@ -620,6 +625,14 @@
         </div>
     </div>
 
+    <!-- LEFT 이미지 팝업 모달 -->
+    <div class="hp-img-modal" id="leftImgModal">
+        <div class="hp-img-modal-inner">
+            <button class="hp-img-modal-close" onclick="document.getElementById('leftImgModal').classList.remove('active')">&times;</button>
+            <img src="LEFT.png" alt="핸드피스 타입 안내">
+        </div>
+    </div>
+
     <!-- HP 이미지 팝업 모달 -->
     <div class="hp-img-modal" id="hpImgModal">
         <div class="hp-img-modal-inner">
@@ -691,6 +704,7 @@
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
                 document.getElementById('hpImgModal').classList.remove('active');
+                document.getElementById('leftImgModal').classList.remove('active');
             }
         });
     </script>
